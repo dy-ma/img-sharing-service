@@ -63,13 +63,17 @@ The Access Codes table will map Access Codes to Events, and which photos within 
     "bucket_prefix": "s3://imgsh-test/",
     "event_id": "fd575f0d-f39a-4ecb-99f9-31813d4edb2c",
     "user_id": "f779de91-995a-4e8d-a2d6-24a5cb37d8bd",
-    "public_url": "example/example_event_name"
+    "public_url": "example/example_event_name",
+    "creation_date": "YYYY-MM-DD",
+    "seconds_to_live": "604800"
 }
 ```
 
 The full S3 path is obtained by appending the event_id to the bucket prefix.
 
 The public url that people see will be prefixed with the owner's username, to keep links short and readable.
+
+`seconds_to_live` stores the time for which the Event should be accessible in seconds since `creation_date`. `creation_date` + `seconds_to_live` = expiry date.
 
 **Accessors**
 
