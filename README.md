@@ -1,6 +1,6 @@
 # Image Sharing Service
 
-![Serverless Architecture Diagram](image_sharing_service.png "Serverless Architecture Diagram")
+![Serverless Architecture Diagram](assets/image_sharing_service.png "Serverless Architecture Diagram")
 
 ## Supported Actions
 
