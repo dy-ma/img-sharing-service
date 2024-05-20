@@ -4,28 +4,31 @@
 
 ## Supported Actions
 
-- **[Upload]** Uploading user selects several photos from their local drive, then clicks "create album". 
-They have the option to add a password to the album, or make it public.
-The page triggers a redirect to their photo album, with a sharing link, qr code, and auto-generated password.
-- **[View]** A viewing user visits the link in their browser, and a text box appears, prompting for the password (if applicable).
+- **[Upload]** Photographers create an Event in the UI. They can then upload 
+images to the event by dragging and dropping from their local drive, or 
+selecting with the iOS/Android photo selector. 
+The photos are then bound to a randomly generated access code, which is given
+to the photo subjects to view their photos at the specific event url.
+- **[View]** A viewing user visits the link in their browser, and a text box 
+appears, prompting for the access code.
 Once authenticated, the photos in the album appear in a grid. 
 The user has the option to download all, one, or a subset of the photos. 
 There is a timer displaying the days/hours left before the photos are deleted.
 
-## Flow
+## Data Model
 
-- **[Upload]**
-  - Browser triggers image picker, user selects photos, and clicks "create album".
-  - frontend triggers a "create album" request, which returns an S3 presigned url.
-    - A lambda function creates a randomly named S3 bucket and generates a presigned URL to it, then forwards it to the frontend.
-  - The selected images are placed into the bucket by the frontend. The user is directed to the album page.
-- **[View]** 
-  - The user visits the link or scans the qr code.
-  - The request will reach the API gateway and lambda function with the correct route.
-  - Based on the name of the album, the lambda function reads the album metadata from the RDS database, the url of the S3 bucket, and whether the album is password protected.
-    - If password protected, the function will return the password screen. 
-    - If correct, continue to the next step.
-  - Frontend recieves the presigned url to the S3 bucket, then requests the content from CloudFront. (Cloudfront domain + S3 url)
-  - CloudFront + S3 returns
-    - First, thumbnail quality images.
-    - Then/Lazily, the full quality images.
+Photo albums are oriented around "events", which contain a large set of photos.
+Events have unique generated urls, and the album owners can share subsets of the
+photos to specific people by generating "access codes".
+
+Photographers can create an event, upload some images to it, and give subjects
+the access code which lets them see only their photos.
+
+Only photographers need to create an account to manage their events and upload
+photos. Viewers of the photos only need to type in the access code.
+
+### Database
+
+### S3
+
+## API
