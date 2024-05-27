@@ -29,7 +29,9 @@ photos. Viewers of the photos only need to type in the access code.
 
 ### Database
 
-This project will use DynamoDB since I'm expecting low utilization, so a serverless option which scales to zero will be cheaper than a provisioned database like RDS.
+This project will use DynamoDB since I'm expecting low utilization, so a 
+serverless option which scales to zero will be cheaper than a provisioned 
+database like RDS.
 
 As a result, my data model must be document oriented.
 
@@ -39,11 +41,14 @@ There will be three tables,
 2. Events
 3. Accessors
 
-The Users table will map user emails to a UUID and store other metadata about the user.
+The Users table will map user emails to a UUID and store other metadata about
+the user.
 
-The Events table will map each Event to a UUID and store metadata about the event.
+The Events table will map each Event to a UUID and store metadata about the 
+event.
 
-The Access Codes table will map Access Codes to Events, and which photos within that Event this code is authorized to see.
+The Access Codes table will map Access Codes to Events, and which photos within 
+that Event this code is authorized to see.
 
 **Users**
 
@@ -69,11 +74,13 @@ The Access Codes table will map Access Codes to Events, and which photos within 
 }
 ```
 
-The full S3 path is obtained by appending the event_id to the bucket prefix.
+The full S3 path is obtained by appending the `event_id` to the bucket prefix.
 
-The public url that people see will be prefixed with the owner's username, to keep links short and readable.
+The public url that people see will be prefixed with the owner's username, to
+keep links short and readable.
 
-`seconds_to_live` stores the time for which the Event should be accessible in seconds since `creation_date`. `creation_date` + `seconds_to_live` = expiry date.
+`seconds_to_live` stores the time for which the Event should be accessible in
+seconds since `creation_date`. `creation_date` + `seconds_to_live` = expiry date.
 
 **Accessors**
 
@@ -93,11 +100,14 @@ The public url that people see will be prefixed with the owner's username, to ke
 
 ### S3
 
-The S3 bucket will follow a directory structure that uses prefixes to narrow down the images.
+The S3 bucket will follow a directory structure that uses prefixes to narrow
+down the images.
 
-The parent bucket will contain directories named by their owner's uuid, then by the event uuid.
+The parent bucket will contain directories named by their owner's uuid, then by
+the event uuid.
 
-This structure should allow for fast throughput, since S3 request speed is per prefix.
+This structure should allow for fast throughput, since S3 request speed is per
+prefix.
 
 
 The structure will resemble the following.
@@ -137,3 +147,27 @@ imgsh/
 ```
 
 ## API
+
+### Event Owners
+
+`GET /auth` Triggers an Amazon Cognito login flow. Returns a JSON web token for
+subsequent requests.
+
+`GET /home` Return event metadata for the logged in user. Relies on 
+`Authorization` http header.
+
+`POST /create_event`
+
+```json
+{
+    "event_name": "string",
+    "created": "timestamp"
+}
+```
+
+`GET /presigned_url` Return a presigned S3 url for owner to upload photos in.
+```json
+{
+    "event_id": "uuid"
+}
+```
