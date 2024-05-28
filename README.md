@@ -148,6 +148,20 @@ imgsh/
 
 ## API
 
+### Test
+
+`GET /test_images` Returns an array of test images in the form of
+
+```json
+{
+    "bucket_prefix": "String",
+    "images": [
+        "presigned_image_url",
+        ...
+    ]
+}
+```
+
 ### Event Owners
 
 `GET /auth` Triggers an Amazon Cognito login flow. Returns a JSON web token for
