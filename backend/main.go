@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -14,6 +13,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/joho/godotenv"
+)
+
+const (
+	EnvBucket   = "S3_TEST_BUCKET_NAME"
+	EnvPrefix   = "S3_TEST_PREFIX"
+	EnvLifetime = "S3_Test_LIFETIME"
 )
 
 type Response struct {
@@ -41,7 +46,7 @@ func GetObjectKeys(client *s3.Client, bucketName string, prefix string) ([]strin
 	})
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// Copy resulting keys into a string
@@ -80,26 +85,40 @@ func GetPresignedURLS(client *s3.PresignClient, bucketName string, keys []string
 	return urls
 }
 
-func main() {
+func loadEnvironmentVariables() (string, string, int, error) {
 	// Load environment variables from .env
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		return "", "", 0, err
 	}
 
 	// Store environment variables
-	BUCKET_NAME := os.Getenv("S3_TEST_BUCKET_NAME")
-	PREFIX := os.Getenv("S3_TEST_PREFIX")
-	LIFETIME_SECS, err := strconv.Atoi(os.Getenv("S3_TEST_LIFETIME"))
+	bucketName := os.Getenv(EnvBucket)
+	prefix := os.Getenv(EnvPrefix)
+	lifetimeSecs, err := strconv.Atoi(os.Getenv(EnvLifetime))
 
 	if err != nil {
-		LIFETIME_SECS = 3600
+		lifetimeSecs = 3600
+	}
+
+	return bucketName, prefix, lifetimeSecs, nil
+}
+
+func loadConfig(region string) (aws.Config, error) {
+	return config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+}
+
+func GetPresignedTestImages() (Response, error) {
+
+	BUCKET_NAME, PREFIX, LIFETIME_SECS, err := loadEnvironmentVariables()
+	if err != nil {
+		return Response{}, fmt.Errorf("couldn't locate environment variables at: %s\n %s\n %s\n ", EnvBucket, EnvPrefix, EnvLifetime)
 	}
 
 	// Load shared AWS configuration
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-1"))
+	cfg, err := loadConfig("us-west-1")
 	if err != nil {
-		log.Fatal(err)
+		return Response{}, err
 	}
 
 	// Create an S3 service client
@@ -107,13 +126,23 @@ func main() {
 
 	keys, err := GetObjectKeys(client, BUCKET_NAME, PREFIX)
 	if err != nil {
-		log.Fatal(err)
+		return Response{}, err
 	}
 
 	presignClient := s3.NewPresignClient(client)
 	presignedURLS := GetPresignedURLS(presignClient, BUCKET_NAME, keys, LIFETIME_SECS)
 
 	res := formatResponse(presignedURLS, BUCKET_NAME, PREFIX, "GET")
-	json_response, _ := json.Marshal(&res)
-	fmt.Printf("json_response: %s\n", json_response)
+
+	return res, nil
+}
+
+func main() {
+	response, err := GetPresignedTestImages()
+	if err != nil {
+		log.Fatal(err)
+		// Return error response
+	}
+
+	fmt.Printf("%+v\n", response)
 }
